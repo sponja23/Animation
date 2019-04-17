@@ -1,11 +1,22 @@
+import numpy as np
 from window import Window
 from drawable import *
-from math_drawable import *
+from grid import *
+from functions import *
 import colors
 
-window = Window(1000, 600)
+window = Window(800, 800)
 
-window.addObject(ParametricPath((200, 200), lambda t: (np.sin(t) % 5, t % 5), 0, color = colors.green))
+grid = Grid((400, 400), (800, 800), (50, 50), defaultColor=colors.black, ratio=50)
+
+window.addObject(grid)
+
+curve = TimeCurve(lambda x, t: (np.sin((x + t) ** 2), x / 2 + np.sin(t + x)), [-10, 10], step=0.1)
+curve.transformation = identity
+print(list(curve.transformation.matrix))
+
+grid.addObject(curve)
+
 
 def draw_rect(window, *args):
 	x, y, width, height = map(int, args)

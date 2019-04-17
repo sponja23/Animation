@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 import colors
 from collections import deque
-from drawable import Drawable, Text
+from drawable import Drawable, Animation, Text, updateObjects
 
 forbiddenKeys = (
 	pygame.K_RSHIFT,
@@ -26,12 +26,11 @@ specialKeys = {
 COMMAND = -1
 NORMAL = 0
 
-
 class Window:
 	def __init__(self, width, height, **kwargs):
 		self.size = self.width, self.height = width, height
 		self.screen = pygame.display.set_mode(self.size)
-		self.backgroundColor = kwargs.get("backgroundColor", colors.black)
+		self.backgroundColor = kwargs.get("backgroundColor", colors.background_color)
 		
 		self.objects = deque([])
 		
@@ -48,7 +47,7 @@ class Window:
 		}
 		self.mode = NORMAL
 
-		self.command_text = Text((10, height - 20), commandFont, "> ", color=colors.white)
+		self.command_text = Text((10, height - 20), commandFont, "> ", color=colors.default_color)
 		self.commands = {
 			"quit": lambda: sys.exit()
 		}
@@ -80,8 +79,7 @@ class Window:
 		self.delta_time = self.clock.get_time()
 		self.time += self.clock.get_time()
 
-		for obj in reversed(self.objects):
-			obj.draw(self)
+		updateObjects(self, self.objects)
 
 		if self.mode == COMMAND:
 			self.command_text.draw(self)
@@ -89,7 +87,6 @@ class Window:
 		pygame.display.flip()
 
 		self.clock.tick(60)
-
 
 	def handleEvent(self, event):
 		if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -149,8 +146,10 @@ class Window:
 
 	# DRAWING
 
-	def putPixel(self, point, color):
-		self.screen.set_at(point.get(), point.color)
+	def putPixel(self, point, color=None):
+		if color is None:
+			color = point.color
+		self.screen.set_at(point.get(), color)
 
 	def drawLine(self, start, end, color, **kwargs):
 		pygame.draw.line(self.screen, color, start.get(), end.get(), kwargs.get("width", 1))
@@ -164,6 +163,11 @@ class Window:
 	def drawImage(self, image, point):
 		self.screen.blit(image, point.get())
 
+	# def drawArrow(self, start, end, color): # TODO
+	# 	self.drawLine(start, end, color)
+	# 	dx1, dy1, dx2, dy2 = arrow_offset(start, end, 10, np.pi/6)
+	# 	self.drawLine(end, end + (dx1, dy1), color)
+	# 	self.drawLine(end, end + (dx2, dy2), color)
 
 
 
