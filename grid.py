@@ -28,7 +28,7 @@ class Grid(Drawable):
 		self.objects = []
 		
 	def inRange(self, point):
-		if type(point) is Point:
+		if isinstance(point, Point):
 			x, y = point.x, point.y
 		else:
 			x, y = point
@@ -37,7 +37,7 @@ class Grid(Drawable):
 
 	def getPoint(self, point):
 		assert(self.inRange(point))
-		if type(point) is Point:
+		if isinstance(point, Point):
 			x, y = point.x, point.y
 		else:
 			x, y = point
@@ -151,4 +151,4 @@ class Vector(Point):
 
 	def draw(self, window):
 		assert(self.parentGrid is not None)
-		window.drawLine(self.parentGrid.getPoint((0, 0)), self.get(), self.color)
+		window.drawLine(self.parentGrid.getPoint((0, 0)), Point(*self.transformation.apply(self.get())), self.color)

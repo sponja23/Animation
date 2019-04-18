@@ -130,7 +130,7 @@ class Point(Drawable):
 		return f"Point({self.x}, {self.y})"
 
 	def adapt(self, grid):
-		self.x, self.y = grid.getPoint().get()
+		self.x, self.y = grid.getPoint(self).get()
 
 class Line(Drawable):
 	def __init__(self, start, end, **kwargs):

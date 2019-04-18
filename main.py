@@ -17,6 +17,8 @@ print(list(curve.transformation.matrix))
 
 grid.addObject(curve)
 
+grid.addObject(Vector(1, 1))
+
 
 def draw_rect(window, *args):
 	x, y, width, height = map(int, args)
