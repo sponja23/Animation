@@ -17,7 +17,7 @@ def assertPoint(x):
 
 class Drawable:
 	def __init__(self, **kwargs):
-		self.color = kwargs.get("color", colors.default_color)
+		self.color = list(map(int, kwargs.get("color", colors.default_color)))
 		self.defaultColor = "color" not in kwargs
 		self.transformation = kwargs.get("transformation", identity)
 
@@ -57,8 +57,9 @@ def updateObjects(window, components):
 
 class Point(Drawable):
 	def __init__(self, x, y, **kwargs):
-		self.x = int(x)
-		self.y = int(y)
+		self.force_int = kwargs.get("force_int", True)
+		self.x = int(x) if self.force_int else x
+		self.y = int(y) if self.force_int else y
 		super().__init__(**kwargs)
 
 	def get(self):
@@ -75,8 +76,9 @@ class Point(Drawable):
 		return self.x == x and self.y == y
 
 	def __ensure_int(self):
-		self.x = int(self.x)
-		self.y = int(self.y)
+		if self.force_int:
+			self.x = int(self.x)
+			self.y = int(self.y)
 
 	def __add__(self, other):
 		if checkArray(other):

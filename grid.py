@@ -36,7 +36,7 @@ class Grid(Drawable):
 		return (self.min_x <= x <= self.max_x) and (self.min_y <= y <= self.max_y)
 
 	def getPoint(self, point):
-		assert(self.inRange(point))
+		# assert(self.inRange(point))
 		if isinstance(point, Point):
 			x, y = point.x, point.y
 		else:
@@ -64,7 +64,7 @@ class Grid(Drawable):
 		updateObjects(window, self.objects)
 
 	def adaptPoint(self, point):
-		assert(self.inRange(point))
+		# assert(self.inRange(point))
 		point.x, point.y = self.getPoint(point).get()
 
 	def addObject(self, obj):
@@ -147,7 +147,7 @@ class ParametricPath(GridObject, Animation):
 
 class Vector(Point):
 	def __init__(self, x, y, **kwargs):
-		super().__init__(x, y)
+		super().__init__(x, y, **kwargs, force_int=False)
 
 	def draw(self, window):
 		assert(self.parentGrid is not None)
