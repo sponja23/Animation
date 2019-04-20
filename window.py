@@ -4,6 +4,7 @@ import numpy as np
 import colors
 from collections import deque
 from drawable import Drawable, Animation, Text, updateObjects
+from functions import arrow_offset
 
 forbiddenKeys = (
 	pygame.K_RSHIFT,
@@ -163,11 +164,11 @@ class Window:
 	def drawImage(self, image, point):
 		self.screen.blit(image, point.get())
 
-	# def drawArrow(self, start, end, color): # TODO
-	# 	self.drawLine(start, end, color)
-	# 	dx1, dy1, dx2, dy2 = arrow_offset(start, end, 10, np.pi/6)
-	# 	self.drawLine(end, end + (dx1, dy1), color)
-	# 	self.drawLine(end, end + (dx2, dy2), color)
+	def drawArrow(self, start, end, color): # TODO
+	 	self.drawLine(start, end, color)
+	 	p1, p2 = arrow_offset(start, end, 30, np.pi/6)
+	 	self.drawLine(end, p1, color)
+	 	self.drawLine(end, p2, color)
 
 
 

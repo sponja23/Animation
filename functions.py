@@ -4,15 +4,20 @@ from numpy import pi
 def distance(x0, y0, x1, y1):
 	return ((x0 - x1) ** 2 + (y0 - y1) ** 2) ** .5
 
-# def arrow_offset(start, end, length, angle):
-# 	alpha = np.arctan((start.y - end.y) / (start.x - end.x)) - angle
-# 	if start.x < end.x:
-# 		if start.y < end.y:
-# 			alpha -= pi/4
-# 			return (
-# 					+10/np.sin(alpha), -10/np.cos(alpha),
-# 					-10/np.sin(-alpha), +10/np.cos(-alpha)
-# 				)
+def arrow_offset(start, end, length, target_angle):
+	line_angle = np.arctan2((start.y - end.y), (start.x - end.x))
+	arrow_angle_1 = line_angle - target_angle
+	arrow_angle_2 = np.pi / 2 - line_angle - target_angle 
+	sign_x = 1 if start.x < end.x else -1
+	sign_y = 1 if start.y < end.y else -1
+
+	arrow_point_1 = end + (sign_x * length * np.cos(arrow_angle_1), sign_y * length * np.sin(arrow_angle_1))
+	arrow_point_2 = end + (sign_x * length * np.cos(arrow_angle_2), sign_y * length * np.sin(arrow_angle_2))
+
+	print(arrow_point_1, arrow_point_2)
+
+	return (arrow_point_1, arrow_point_2)
+
 
 def dot(v, w):
 	return sum(x0 * x1 for x0, x1 in zip(v, w))

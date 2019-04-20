@@ -151,4 +151,4 @@ class Vector(Point):
 
 	def draw(self, window):
 		assert(self.parentGrid is not None)
-		window.drawLine(self.parentGrid.getPoint((0, 0)), Point(*self.transformation.apply(self.get())), self.color)
+		window.drawArrow(self.parentGrid.getPoint((0, 0)), Point(*self.transformation.apply(self.get())), self.color)

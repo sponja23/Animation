@@ -168,7 +168,7 @@ class Arrow(Line):
 		super().__init__(start, end, **kwargs)
 
 	def draw(self, window):
-		window.drawArrow(self.transformation.apply(self.startPoint), self.transformation.apply(self.endPoint), self.color)
+		window.drawArrow(self.transformation.apply(self.startPoint, window), self.transformation.apply(self.endPoint, window), self.color)
 
 class Rectangle(Drawable):
 	def __init__(self, start, width, height, **kwargs):
