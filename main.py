@@ -14,7 +14,7 @@ window.addObject(grid)
 curve = TimeCurve(lambda x, t: (np.sin((x + t) ** 2), x / 2 + np.sin(t + x)), [-10, 10], step=0.1)
 curve.transformation = identity
 
-grid.addObject(Vector(-1, 2, color = colors.red))
+grid.addObject(Vector(0, 5, color = colors.red))
 
 def draw_rect(window, *args):
 	x, y, width, height = map(int, args)

@@ -5,16 +5,20 @@ def distance(x0, y0, x1, y1):
 	return ((x0 - x1) ** 2 + (y0 - y1) ** 2) ** .5
 
 def arrow_offset(start, end, length, target_angle):
-	line_angle = np.arctan2((start.y - end.y), (start.x - end.x))
+	if start.x == end.x:
+		line_angle = np.pi/2 if start.y < end.y else -np.pi/2
+	else:
+		line_angle = np.arctan((start.y - end.y) / (start.x - end.x))
 	arrow_angle_1 = line_angle - target_angle
 	arrow_angle_2 = np.pi / 2 - line_angle - target_angle 
-	sign_x = 1 if start.x < end.x else -1
-	sign_y = 1 if start.y < end.y else -1
+
+	sign_x = 1 if start.x > end.x else -1
+	sign_y = sign_x
+
+	print(sign_x, sign_y)
 
 	arrow_point_1 = end + (sign_x * length * np.cos(arrow_angle_1), sign_y * length * np.sin(arrow_angle_1))
-	arrow_point_2 = end + (sign_x * length * np.cos(arrow_angle_2), sign_y * length * np.sin(arrow_angle_2))
-
-	print(arrow_point_1, arrow_point_2)
+	arrow_point_2 = end + (sign_x * length * np.sin(arrow_angle_2), sign_y * length * np.cos(arrow_angle_2))
 
 	return (arrow_point_1, arrow_point_2)
 

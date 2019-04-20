@@ -166,7 +166,7 @@ class Window:
 
 	def drawArrow(self, start, end, color): # TODO
 	 	self.drawLine(start, end, color)
-	 	p1, p2 = arrow_offset(start, end, 30, np.pi/6)
+	 	p1, p2 = arrow_offset(start, end, 40, np.pi/6)
 	 	self.drawLine(end, p1, color)
 	 	self.drawLine(end, p2, color)
 
