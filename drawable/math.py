@@ -92,10 +92,29 @@ class Vector(Arrow):
 	def __init__(self, coords, **kwargs):
 		super().__init__(kwargs.get("start", (0, 0)), coords, **kwargs)
 
+def point_grid(range, step):
+	if hasattr(step, "__getitem__"):
+		step_x, step_y = step
+	else:
+		step_x = step_y = step
+
+	if hasattr(range[0], "__getitem__"):
+		range_x, range_y = range
+	else:
+		range_x = range_y = range
+
+	range_x = np.arange(range_x[0], range_x[1] + step_x, step_x)
+	range_y = np.arange(range_y[0], range_y[1] + step_y, step_y)
+
+	points = np.transpose(np.meshgrid(range_x, range_y))
+
+	return points.reshape(-1, points.shape[-1])
+
+
 class VectorField(Drawable): # TODO
-	def __init__(self, function, points, **kwargs):
+	def __init__(self, function, points = None, **kwargs):
 		self.function = function
-		self.inputPoints = points
+		self.inputPoints = points if points is not None else point_grid(kwargs["range"], kwargs.get("step", 1))
 		self.maxLength = kwargs.get("maxLength", 1)
 		self.cache = kwargs.get("cache", True)
 		self.cached_points = None
@@ -106,7 +125,7 @@ class VectorField(Drawable): # TODO
 
 	def draw(self):
 		if self.cache and self.cached_points is None:
-			self.outputPoints()
+			self.cached_points = self.outputPoints()
 
 		for p1, p2 in zip(self.inputPoints, self.cached_points if self.cache else self.outputPoints()):
 			
