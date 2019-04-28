@@ -1,26 +1,18 @@
 import numpy as np
-from window import Window
-from drawable import *
-from grid import *
-from functions import *
-import colors
+from drawable import colors
+from drawable.math import *
+from drawable.shapes import *
+from drawable.animations import *
+from canvas import Canvas
 
-window = Window(800, 800)
+canvas = Canvas((800, 800), ratio = 50, debug = True)
 
-grid = Grid((400, 400), (800, 800), (50, 50), defaultColor=colors.black, ratio=50)
+canvas.addObject(Grid((1, 1)))
 
-window.addObject(grid)
+range = np.arange(-5, 6, .5)
+points = np.transpose(np.meshgrid(range, range))
+points = points.reshape(-1, points.shape[-1])
 
-curve = TimeCurve(lambda x, t: (np.sin((x + t) ** 2), x / 2 + np.sin(t + x)), [-10, 10], step=0.1)
-curve.transformation = identity
+canvas.addObject(VectorField(lambda x, y: (x * y, y ** 2), points, maxLength=0.5))
 
-grid.addObject(Vector(0, 5, color = colors.red))
-
-def draw_rect(window, *args):
-	x, y, width, height = map(int, args)
-	window.addObject(Rectangle((x, y), width, height, color=colors.white))
-
-window.addCommand("draw-rect", draw_rect)
-
-while 1:
-	window.update()
+canvas.loop(60) # freq in Hz

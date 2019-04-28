@@ -156,19 +156,23 @@ class Window:
 		pygame.draw.line(self.screen, color, start.get(), end.get(), kwargs.get("width", 1))
 
 	def drawRectangle(self, start, width, height, color, **kwargs):
-		pygame.draw.rect(self.screen, color, (*start.get(), width, height), kwargs.get("line_width", 0))
+		pygame.draw.rect(self.screen, color, (*start.get(), width, height), kwargs.get("width", 0))
 
 	def drawCircle(self, center, radius, color, **kwargs):
-		pygame.draw.circle(self.screen, color, center.get(), radius, kwargs.get("line_width", 0))
+		pygame.draw.circle(self.screen, color, center.get(), radius, kwargs.get("width", 0))
+
+	def drawPolygon(self, points, color, **kwargs):
+		pygame.draw.polygon(self.screen, color, [p.get() for p in points], kwargs.get("width", 0))
 
 	def drawImage(self, image, point):
 		self.screen.blit(image, point.get())
 
-	def drawArrow(self, start, end, color): # TODO
-	 	self.drawLine(start, end, color)
-	 	p1, p2 = arrow_offset(start, end, 40, np.pi/6)
-	 	self.drawLine(end, p1, color)
-	 	self.drawLine(end, p2, color)
+	def drawArrow(self, start, end, color):
+		length = np.sqrt((start.x - end.x) ** 2 + (start.y - end.y) ** 2)
+		print(length)
+		self.drawLine(start, end, color, width=max(1, int(length/50)))
+		p1, p2 = arrow_offset(start, end,  length / 6, np.pi/6)
+		self.drawPolygon([end, p1, p2], color)
 
 
 
