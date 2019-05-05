@@ -1,8 +1,9 @@
 import numpy as np
-from .drawable import Drawable, ensureArray
+from .drawable import Drawable
 from .shapes import Arrow
 from . import colors
 from .animations import Animation
+from ..utils import ensureArray
 
 class Curve(Drawable):
 	def __init__(self, function, range, **kwargs):
@@ -28,7 +29,7 @@ class Curve(Drawable):
 		return np.arange(self.range[0], self.range[1] + self.step, self.step)
 
 	def points(self, **kwargs):
-		return (self.function(x) for x in self.domain())
+		return [self.function(x) for x in self.domain()]
 
 	def draw(self):
 		prev_point = None
@@ -51,7 +52,7 @@ class Graph(Curve):
 		super().__init__(function, range, **kwargs)
 
 	def points(self):
-		return ((x, self.function(x)) for x in self.domain())
+		return [(x, self.function(x)) for x in self.domain()]
 
 class TimeCurve(Curve, Animation):
 	def __init__(self, function, range, **kwargs):

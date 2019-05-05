@@ -1,16 +1,7 @@
 import pygame
 from . import colors
 import numpy as np
-
-def ensureArray(obj):
-	if not isinstance(obj, np.ndarray):
-		return np.array(obj)
-	return obj
-
-def ensureList(obj):
-	if type(obj) is not list and type(obj) is not tuple:
-		return list(obj)
-	return obj
+from ..utils import ensureArray, ensureList
 
 class Drawable:
 	def __init__(self, **kwargs):
@@ -42,7 +33,7 @@ class Drawable:
 			setattr(self, name, self.bindings[name]())
 
 	def draw(self):
-		raise NotImplemented
+		pass
 
 class Point(Drawable):
 	def __init__(self, coords, **kwargs):

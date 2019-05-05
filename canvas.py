@@ -1,7 +1,7 @@
 from collections import deque
 import numpy as np
 from drawable import colors
-from drawable.drawable import ensureArray
+from utils import ensureArray
 from backends.pygame_backend import PygameBackend
 from time import sleep
 
@@ -37,7 +37,7 @@ class Canvas:
 		self.objects = deque([])
 
 		self.time = kwargs.get("startTime", 0)
-		self.delta_time = None
+		self.deltaTime = None
 
 		self.data = {}
 
@@ -102,13 +102,13 @@ class Canvas:
 
 	def advance(self, time_passed):
 		self.backend.fill(self.backgroundColor)
-		self.delta_time = time_passed
-		self.time += self.delta_time
+		self.deltaTime = time_passed
+		self.time += self.deltaTime
 		self.update()
 
 	def jump(self, time):
 		self.backend.fill(self.backgroundColor)
-		self.delta_time = None
+		self.deltaTime = None
 		self.time = time
 		self.update()
 

@@ -1,4 +1,5 @@
-from drawable import Drawable, ensureArray
+from drawable import Drawable
+from ..utils import ensureArray
 
 class Line(Drawable):
 	def __init__(self, start, end, **kwargs):

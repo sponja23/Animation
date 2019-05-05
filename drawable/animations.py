@@ -1,4 +1,4 @@
-from .drawable import ensureArray
+from ..utils import ensureArray
 import numpy as np
 
 class Animation:
