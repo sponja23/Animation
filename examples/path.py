@@ -1,11 +1,15 @@
 from init import *
 
-path1 = ParametricPath(lambda t: (2 * np.sin(t), 2 * np.cos(t)), speed = 5, canvas = canvas)
-path2 = path1 + ParametricPath(lambda t: (np.sin(3 * t), np.cos(7 * t)), speed = 5, canvas = canvas)
+canvas.addObject(Curve(lambda x: (np.sin(x), np.cos(x)), [0, 6.29]))
+path = ParametricPath(lambda t: (np.sin(t), np.cos(t)))
+canvas.addAnimation(path)
 
-canvas.addObject(Vector((0, 0), bindings={"end": path1.point}, color=colors.red))
-canvas.addObject(Vector((0, 0), bindings={"start": path1.point, "end": path2.point}, color=colors.blue))
+canvas.addObject(Vector([0, 1], bindings={"end": path.point}))
 
-canvas.addObject(ParametricTraceCurve(path2.point, 0, speed=1000, step=10))
+canvas.addObject(TimeCurve(lambda x, t: (x, np.cos(x + t)), [-5, 5], color = colors.blue))
+canvas.addObject(Line([0, 0], [0, 0], bindings={"start": lambda: (0, path.point()[1]), "end": path.point}, color = colors.blue))
+
+canvas.addObject(TimeCurve(lambda x, t: (np.sin(x + t), x), [-5, 5], color = colors.red))
+canvas.addObject(Line([0, 0], [0, 0], bindings={"start": lambda: (path.point()[0], 0), "end": path.point}, color = colors.red))
 
 canvas.loop(60)

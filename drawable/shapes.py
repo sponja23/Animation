@@ -1,5 +1,5 @@
 from drawable import Drawable
-from ..utils import ensureArray
+from utils import ensureArray, isConvex
 
 class Line(Drawable):
 	def __init__(self, start, end, **kwargs):
@@ -36,15 +36,23 @@ class Circle(Drawable):
 		super().__init__(**kwargs)
 
 	def draw(self):
-		self.canvas.drawCircle(self.center, self.radius)
+		self.canvas.drawCircle(self.center, self.radius, self.color)
 
 class Polygon(Drawable):
-	def __init__(self, *points, **kwargs):
+	def __init__(self, points, **kwargs):
 		self.points = [ensureArray(p) for p in points]
 		super().__init__(**kwargs)
 
 	def draw(self):
 		self.canvas.drawPolygon(self.points, self.color)
+
+class ConvexPolygon(Polygon):
+	def __init__(self, points, **kwargs):
+		super().__init__(points, **kwargs)
+		assert(isConvex(self.points))
+
+	def draw(self):
+		self.canvas.drawConvexPolygon(self.points, self.color)
 
 class Arrow(Line):
 	def __init__(self, start, end, **kwargs):

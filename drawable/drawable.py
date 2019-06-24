@@ -1,11 +1,16 @@
 import pygame
 from . import colors
 import numpy as np
-from ..utils import ensureArray, ensureList
+import sys
+
+sys.path.append("..")
+
+from utils import ensureArray, ensureList, ensureTuple
 
 class Drawable:
 	def __init__(self, **kwargs):
-		self.color = np.array(list(map(int, kwargs.get("color", colors.default_color))))
+		self.id = kwargs.get("id", None)
+		self.color = tuple(map(int, kwargs.get("color", colors.default_color)))
 		self.defaultColor = "color" not in kwargs
 		self.canvas = kwargs.get("canvas", None)
 		self.onBeforeDraw = ensureList(kwargs.get("onBeforeDraw", []))
@@ -20,8 +25,10 @@ class Drawable:
 	def attachTo(self, canvas):
 		self.canvas = canvas
 		if self.defaultColor:
-			self.color = ensureArray(self.canvas.getObjectColor())
-		self.canvas.objects.appendleft(self)
+			self.color = ensureTuple(self.canvas.getObjectColor())
+		if self.id is None:
+			self.id = self.canvas.getObjectId()
+		self.canvas.objects[self.id] = self
 
 	def bind(self, propertyName, function):
 		self.bindings[propertyName] = function
@@ -44,20 +51,13 @@ class Point(Drawable):
 		self.canvas.putPixel(self.pos, self.color)
 
 class Text(Drawable):
-	def __init__(self, start, font, content, **kwargs):
+	def __init__(self, start, content, font, **kwargs):
 		self.start = ensureArray(start)
 		self.font = font
 		self.content = content
+		self.size = kwargs.get("size", 8)
+
 		super().__init__(**kwargs)
-
-		self.updateSurface()
-
-	def updateSurface(self):
-		self.surface = self.font.render(self.content, False, self.color)
-
-	def changeText(self, content):
-		self.content = content
-		self.updateSurface()
-
+	
 	def draw(self):
-		self.canvas.drawImage(self.start, self.surface)
+		self.canvas.drawText(self.start, self.content, self.font, self.color, size=self.size)

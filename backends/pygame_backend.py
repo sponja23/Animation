@@ -1,48 +1,45 @@
 import pygame
 import sys
-from collections import defaultdict
+import numpy as np
+from .base_backends import InteractiveBackend
+from matplotlib import image
 
-class PygameBackend:
+class PygameBackend(InteractiveBackend):
 	def __init__(self, size, canvas, **kwargs):
-		self.interactive = True
-
-		self.width, self.height = self.size = size
+		super().__init__(size, canvas, **kwargs)
 		self.screen = pygame.display.set_mode(self.size)
-		self.canvas = canvas
-		
-		self.mouseButtons = [False for i in range(6)]
-		self.keyPressed = defaultdict(lambda: False)
+		self.transformation = self.inverse_transformation = np.array([[1., 0.],
+																	  [0., -1.]])
 
-	def fill(self, color):
+	def update(self):
 		pygame.display.flip()
 		for event in pygame.event.get():
-			self.handleEvents(event)
+			self.handleEvent(event)
+
+	def fill(self, color):
 		self.screen.fill(color)
 
-	def handleEvents(self, event):
+	def handleEvent(self, event):
 		if event.type == pygame.MOUSEMOTION:
-			self.canvas.mouseMove(event.pos, event.rel)
+			self.canvas.fire("mouseMove", event.pos, event.rel)
 
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			self.mouseButtons[event.button] = True
-			self.canvas.mouseDown(event.pos, event.button)
+			self.canvas.fire("mouseDown", event.pos, event.button)
 
 		elif event.type == pygame.MOUSEBUTTONUP:
 			self.mouseButtons[event.button] = False
-			self.canvas.mouseUp(event.pos, event.button)
+			self.canvas.fire("mouseUp", event.pos, event.button)
 
 		elif event.type == pygame.KEYDOWN:
 			self.keyPressed[pygame.key.name(event.key)] = True
 
 		elif event.type == pygame.KEYUP:
 			self.keyPressed[pygame.key.name(event.key)] = False
-			self.canvas.keyPressed(pygame.key.name(event.key))
+			self.canvas.fire("keyPress", pygame.key.name(event.key))
 
 		elif event.type == pygame.QUIT:
 			sys.exit()
-
-	def isKeyPressed(self, key):
-		return self.keyPressed[key]
 
 	def putPixel(self, point, color):
 		self.screen.set_at(point, color)
@@ -59,5 +56,17 @@ class PygameBackend:
 	def drawPolygon(self, points, color, **kwargs):
 		pygame.draw.polygon(self.screen, color, points, kwargs.get("width", 0))
 
+	def drawConvexPolygon(self, points, color, **kwargs):
+		self.drawPolygon(points, color, **kwargs)
+
 	def drawImage(self, point, image):
 		self.screen.blit(image, point)
+
+	def drawText(self, point, content, font, **kwargs):
+		image = font.render(content, False, color)
+		self.drawImage(point, image)
+
+	def saveFrame(self, filename):
+		array = pygame.surfarray.array3d(self.screen).swapaxes(0,1)
+		image.imsave(f"output/image/{filename}", array)
+

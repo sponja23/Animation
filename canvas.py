@@ -1,4 +1,4 @@
-from collections import deque
+from collections import OrderedDict
 import numpy as np
 from drawable import colors
 from utils import ensureArray
@@ -6,10 +6,14 @@ from backends.pygame_backend import PygameBackend
 from time import sleep
 
 def panning(self, pos, rel):
-	if self.backend.isKeyPressed("space") and self.backend.mouseButtons[1]:
+	if self.backend.isKeyPressed("space") and self.backend.isButtonPressed(1):
 		self.center += rel
 
-def zooming(self, pos, button):
+def screenCap(self, key):
+	if key == 'p':
+		self.backend.saveFrame("screen.jpg")
+
+def zooming(self, pos, button): # TODO
 	if button == 4:
 		amount = 5 if self.backend.isKeyPressed("left shift") else 1
 		if self.ratio - amount > 5:
@@ -23,8 +27,31 @@ def printPoint(self, pos, button):
 	if button == 1:
 		print(pos, self.inverseTransform(pos))
 
+
+class EventHandler:
+	def __init__(self, types):
+		self.handlers = {t: [] for t in types}
+
+	def add(self, *types):
+		for t in types:
+			self.handlers[t] = []
+
+	def on(self, type, function):
+		self.handlers[type].append(function)
+
+	def fire(self, canvas, type, *args, **kwargs):
+		for handler in self.handlers[type]:
+			handler(canvas, *args, **kwargs)
+
+
 class Canvas:
 	def __init__(self, size, **kwargs):
+		self.objects = {}
+		self.nextObjectId = 0
+		
+		self.animations = {}
+		self.nextAnimationId = 0
+		
 		self.size = size
 		self.backgroundColor = kwargs.get("backgroundColor", colors.background_color)
 		self.defaultColor = kwargs.get("defaultColor", colors.default_color)
@@ -34,29 +61,48 @@ class Canvas:
 
 		self.backend = kwargs.get("backend", PygameBackend)(size, self, **kwargs)
 
-		self.objects = deque([])
-
 		self.time = kwargs.get("startTime", 0)
 		self.deltaTime = None
 
-		self.data = {}
+		self.data = OrderedDict({})
 
 		self.debug = kwargs.get("debug", False)
+		self.handler = EventHandler(["tick"])
+
+		self.fps = self.backend.fps
+		self.frame_time = 1000 / self.fps
 
 		if self.backend.interactive: self.init_interactive(**kwargs)
 
+
+#
+#
+#  EVENTS
+#
+#
+
+	def fire(self, type, *args, **kwargs):
+		self.handler.fire(self, type, *args, **kwargs)
+
+	def on(self, type, function):
+		self.handler.on(type, function)
+
 	def init_interactive(self, **kwargs):
-		self.onMouseDown = []
-		self.onMouseUp = []
-		self.onMouseMove = []
-		self.onKeyPress = []
+		self.handler.add("mouseDown", "mouseUp", "mouseMove", "keyPress")
 
 		if kwargs.get("movement", True):
-			self.onMouseMove.append(panning)
-			self.onMouseDown.append(zooming)
-
+			self.handler.on("mouseDown", zooming)
+			self.handler.on("mouseMove", panning)
+		if kwargs.get("screenCap", True):
+			self.handler.on("keyPress", screenCap)
 		if self.debug:
-			self.onMouseDown.append(printPoint)
+			self.handler.on("mouseDown", printPoint)
+
+#
+#
+#  GEOMETRY
+#
+#
 
 
 	@property
@@ -77,79 +123,155 @@ class Canvas:
 
 	@property
 	def transformation(self):
-		return np.array([[self.ratio,  0], 
-						 [0, -self.ratio]])
+		return self.backend.transformation @ [[self.ratio, 0], 
+						 					  [0, self.ratio]]
 	
 	@property
 	def inverse_transformation(self):
-		return np.array([[1.0/self.ratio,  0],
-						 [0, -1.0/self.ratio]])
+		return self.backend.inverse_transformation @ [[1.0/self.ratio, 0],
+						 					  		  [0, 1.0/self.ratio]]
 	
 	def transform(self, point):
-		return [int(x) for x in (self.transformation @ point + self.center)]
+		return tuple([int(x) for x in (self.transformation @ point + self.center)])
 
 	def inverseTransform(self, point):
 		return self.inverse_transformation @ (point - self.center) 
 
-	def addObject(self, object):
-		object.attachTo(self)
-
 	def inRange(self, point):
 		return (self.min_x <= point[0] <= self.max_x and self.min_y < point[1] < self.max_y)
+
+#
+#
+#  OBJECTS
+#
+#
+
+
+	def addObject(self, object):
+		object.attachTo(self)
+		return object.id
+
+	def getObjectId(self):
+		self.nextObjectId += 1
+		return f"sprite_{self.nextObjectId - 1}"
 
 	def getObjectColor(self):
 		return self.defaultColor # TODO
 
-	def advance(self, time_passed):
+
+#
+#
+#  ANIMATIONS
+#
+#
+
+	def addAnimation(self, animation):
+		animation.attachTo(self)
+		return animation.id
+
+	def getAnimationId(self):
+		self.nextAnimationId += 1
+		return f"animation_{self.nextAnimationId - 1}"
+
+	def pauseAnimations(self):
+		for id, animation in self.animations.items():
+			animation.pause()
+
+	def unpauseAnimations(self):
+		for id, animation in self.animations.items():
+			animation.unpause()
+
+	def toggleAnimations(self):
+		for id, animation in self.animations.items():
+			animation.togglePause()
+
+#
+#
+#  FRAMES
+#
+#
+
+	def newFrame(self):
 		self.backend.fill(self.backgroundColor)
+
+	def advance(self, time_passed=None): # milliseconds
+		if time_passed is None:
+			time_passed = self.frame_time
+		self.newFrame()
 		self.deltaTime = time_passed
 		self.time += self.deltaTime
-		self.update()
+		self.update(time_passed)
+
+	def play(self, time): # seconds
+		n_frames = int(time * self.fps)
+		for i in range(1, n_frames + 1):
+			if self.debug:
+				print(f"Playing {int((i / n_frames) * 100)}%\r", end="")
+			self.advance()
 
 	def jump(self, time):
-		self.backend.fill(self.backgroundColor)
+		self.newFrame()
 		self.deltaTime = None
 		self.time = time
 		self.update()
 
-	def update(self):
-		for obj in reversed(self.objects):
+	def update(self, time_passed = None):
+		for id, obj in self.objects.items():
 			obj.beforeDraw()
 			obj.draw()
+		self.fire("tick", time_passed)
+		self.backend.update()
 
-	def mouseDown(self, pos, button):
-		pos = np.array(pos)
-		for handler in self.onMouseDown:
-			handler(self, pos, button)
+	def loop(self, frequency=None): # frequency in Hz; Can't be stopped
+		if not self.backend.interactive:
+			raise NotImplemented
+		while 1:
+			if frequency is None:
+				frequency = self.backend.fps
+			self.advance(int(1000 / frequency)) # in ms
+			sleep(1 / frequency) # in seconds
 
-	def mouseUp(self, pos, button):
-		pos = np.array(pos)
-		for handler in self.onMouseUp:
-			handler(self, pos, button)
+#
+#
+#  SAVING
+#
+#
 
-	def mouseMove(self, pos, rel):
-		pos, rel = np.array(pos), np.array(rel)
-		for handler in self.onMouseMove:
-			handler(self, pos, rel)
 
-	def keyPressed(self, key):
-		for handler in self.onKeyPress:
-			handler(self, keyPress)
+
+	def startRecording(self, filename, **kwargs):
+		self.backend.startRecording(filename, **kwargs)
+
+	def stopRecording(self):
+		self.backend.stopRecording()
+
+	def saveFrame(self, filename):
+		self.backend.saveFrame(filename)
+
+
+#
+#
+#  DRAWING
+#
+#
 
 	def putPixel(self, position, color):
 		self.backend.putPixel(self.transform(position), color)
 
 	def drawLine(self, start, end, color, **kwargs):
-		self.backend.drawLine(self.transform(start), self.transform(end), color, **kwargs)
+		self.backend.drawLine(self.transform(start), self.transform(end), tuple(color), **kwargs)
 
 	def drawRectangle(self, start, width, height, color, **kwargs):
-		self.backend.drawRectangle(self.transform(start), width * self.ratio, height * self.ratio, color, **kwargs)
+		self.backend.drawRectangle(self.transform(start), int(width * self.ratio), int(height * self.ratio), tuple(color), **kwargs)
 
 	def drawCircle(self, center, radius, color, **kwargs):
-		self.backend.drawCircle(self.transform(center), radius * self.ratio, color, **kwargs)
+		self.backend.drawCircle(self.transform(center), int(radius * self.ratio), tuple(color), **kwargs)
 
 	def drawPolygon(self, points, color, **kwargs):
-		self.backend.drawPolygon([self.transform(p) for p in points], color, **kwargs)
+		self.backend.drawPolygon([self.transform(p) for p in points], tuple(color), **kwargs)
+
+	def drawConvexPolygon(self, points, color, **kwargs):
+		self.backend.drawConvexPolygon([self.transform(p) for p in points], tuple(color), **kwargs)
 
 	def drawImage(self, point, image):
 		self.backend.drawImage(self.transform(point), image)
@@ -158,13 +280,13 @@ class Canvas:
 		length = np.sqrt((start[0] - end[0])**2 + (start[1] - end[1])**2)
 		p1, p2 = arrow_points(start, end, min(length / 4, .20), np.pi/6)
 		p1, p2, start, end = map(self.transform, [p1, p2, start, end])
-		self.backend.drawLine(start, end, color, width=2)
-		self.backend.drawPolygon([end, p1, p2], color, width=0)
+		self.backend.drawLine(start, end, tuple(color), width=2)
+		self.backend.drawConvexPolygon([end, p1, p2], tuple(color))
 
-	def loop(self, frequency=60): # frequency in Hz; Can't be stopped
-		while 1:
-			self.advance(int(1000 / frequency)) # in ms
-			sleep(1 / frequency) # in seconds
+	def drawText(self, point, text, font, color, **kwargs):
+		self.backend.drawText(point, text, font, tuple(color), **kwargs)
+
+
 
 def arrow_points(start, end, length, target_angle):
 	if start[0] == end[0]:

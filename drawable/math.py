@@ -3,7 +3,7 @@ from .drawable import Drawable
 from .shapes import Arrow
 from . import colors
 from .animations import Animation
-from ..utils import ensureArray
+from utils import ensureArray
 
 class Curve(Drawable):
 	def __init__(self, function, range, **kwargs):
@@ -61,7 +61,7 @@ class TimeCurve(Curve, Animation):
 		Animation.__init__(self, **kwargs)
 
 	def points(self):
-		return (self.function(x, self.canvas.time * self.speed) for x in self.domain())
+		return (self.function(x, self.time * self.speed) for x in self.domain())
 
 class TimeGraph(TimeCurve):
 	def __init__(self, function, range, **kwargs):
@@ -78,7 +78,7 @@ class ParametricPathCurve(Curve, Animation):
 		Animation.__init__(self, **kwargs)
 
 	def domain(self):
-		return np.arange(self.range[0] + self.canvas.time * self.speed, self.range[1] + self.step + self.canvas.time * self.speed, self.step)
+		return np.arange(self.range[0] + self.time * self.speed, self.range[1] + self.step + self.canvas.time * self.speed, self.step)
 
 class ParametricTraceCurve(ParametricPathCurve):
 	def __init__(self, function, start=0, **kwargs):
@@ -86,7 +86,7 @@ class ParametricTraceCurve(ParametricPathCurve):
 		super().__init__(function, start, 0, **kwargs, step=step)
 
 	def domain(self):
-		return np.arange(self.range[0], self.range[1] + self.step + self.canvas.time * self.speed, self.step)
+		return np.arange(self.range[0], self.range[1] + self.step + self.time * self.speed, self.step)
 
 
 class Vector(Arrow):
@@ -112,36 +112,35 @@ def point_grid(range, step):
 	return points.reshape(-1, points.shape[-1])
 
 
-class VectorField(Drawable): # TODO
+class VectorField(Drawable):
 	def __init__(self, function, points = None, **kwargs):
 		self.function = function
 		self.inputPoints = points if points is not None else point_grid(kwargs["range"], kwargs.get("step", 1))
 		self.maxLength = kwargs.get("maxLength", 1)
 		self.cache = kwargs.get("cache", True)
-		self.cached_points = None
+		self.cached_vectors = None
+		self.minColor = kwargs.get("minColor", colors.green)
+		self.maxColor = kwargs.get("maxColor", colors.red)
 		super().__init__(**kwargs)
 
-	def outputPoints(self, domain = None):
+	def outputVectors(self, domain = None):
 		return [np.array(self.function(*x)) for x in self.inputPoints]
 
 	def draw(self):
-		if self.cache and self.cached_points is None:
-			self.cached_points = self.outputPoints()
+		if self.cache and self.cached_vectors is None:
+			self.cached_vectors = self.outputVectors()
 
-		for p1, p2 in zip(self.inputPoints, self.cached_points if self.cache else self.outputPoints()):
-			
-			length = np.sqrt(sum((p1 - p2) ** 2))
-			ratio = self.maxLength / length
-			
-			if length == 0:
-				color = colors.red
+		for point, vector in zip(self.inputPoints, self.cached_vectors if self.cache else self.outputVectors()):
+			length = np.linalg.norm(vector)
+			if length != 0:
+				ratio = length / self.maxLength
+				color = colors.interpolation(self.maxColor, self.minColor, min(1, 2 / ratio))
+				if length > self.maxLength:
+					vector /= ratio
+				self.canvas.drawArrow(point, point + vector, color)
 			else:
-				color = colors.interpolation(colors.red, colors.green, min(1, ratio))
+				self.canvas.drawCircle(point, .04, self.minColor)
 
-			if length > self.maxLength:
-				p2 = ratio * p2 - (ratio - 1) * p1
-
-			self.canvas.drawArrow(p1, p2, color)
 
 
 class Grid(Drawable):
