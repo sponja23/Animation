@@ -7,6 +7,7 @@ from matplotlib import image
 class PygameBackend(InteractiveBackend):
 	def __init__(self, size, canvas, **kwargs):
 		super().__init__(size, canvas, **kwargs)
+		pygame.init()
 		self.screen = pygame.display.set_mode(self.size)
 		self.transformation = self.inverse_transformation = np.array([[1., 0.],
 																	  [0., -1.]])
@@ -62,8 +63,9 @@ class PygameBackend(InteractiveBackend):
 	def drawImage(self, point, image):
 		self.screen.blit(image, point)
 
-	def drawText(self, point, content, font, **kwargs):
-		image = font.render(content, False, color)
+	def drawText(self, point, content, font, color, **kwargs):
+		font_object = pygame.font.SysFont(font, 15)
+		image = font_object.render(content, False, color)
 		self.drawImage(point, image)
 
 	def saveFrame(self, filename):

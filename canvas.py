@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import numpy as np
 from drawable import colors
+from drawable.drawable import Text
 from utils import ensureArray
 from backends.pygame_backend import PygameBackend
 from time import sleep
@@ -27,6 +28,8 @@ def printPoint(self, pos, button):
 	if button == 1:
 		print(pos, self.inverseTransform(pos))
 
+def setTextToTime(self):
+	self.content = str(self.canvas.time / 1000)
 
 class EventHandler:
 	def __init__(self, types):
@@ -73,6 +76,11 @@ class Canvas:
 		self.frame_time = 1000 / self.fps
 
 		if self.backend.interactive: self.init_interactive(**kwargs)
+		if self.debug: self.init_debug(**kwargs)
+
+
+	def init_debug(self, **kwargs):
+		self.addObject(Text((self.min_x + .2, self.min_y + .2), "", "monospace", color=colors.black, onBeforeDraw=setTextToTime))
 
 
 #
@@ -97,6 +105,7 @@ class Canvas:
 			self.handler.on("keyPress", screenCap)
 		if self.debug:
 			self.handler.on("mouseDown", printPoint)
+			
 
 #
 #
@@ -284,7 +293,7 @@ class Canvas:
 		self.backend.drawConvexPolygon([end, p1, p2], tuple(color))
 
 	def drawText(self, point, text, font, color, **kwargs):
-		self.backend.drawText(point, text, font, tuple(color), **kwargs)
+		self.backend.drawText(self.transform(point), text, font, tuple(color), **kwargs)
 
 
 

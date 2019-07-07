@@ -97,24 +97,23 @@ class CircularPath(Path):
 	def getPoint(self, time):
 		return self.center + self.radius * np.array([np.cos(time * self.speed), np.sin(time * self.speed)])
 
-# class LinePath(Path): ## FIX TIME
-# 	def __init__(self, start, end, **kwargs):
-# 		self.start = ensureArray(start)
-# 		self.end = ensureArray(end)
-# 		super().__init__(**kwargs)
+class LinePath(Path):
+	def __init__(self, start, end, **kwargs):
+		self.start = ensureArray(start)
+		self.end = ensureArray(end)
+		super().__init__(**kwargs)
 
-# 		if "time" in kwargs:
-# 			self.speed = distance(self.start, self.end) / kwargs["time"]
+		if "time" in kwargs:
+			self.speed = (distance(self.start, self.end) / kwargs["time"]) * .001
 
-# 	def getPoint(self, time):
-# 		return self.start + (self.end - self.start) * time * self.speed
+	def getPoint(self, time):
+		return self.start + ((self.end - self.start) / distance(self.start, self.end)) * time * self.speed
 
-# class SegmentPath(LinePath): ## FIX TIME
-# 	def __init__(self, start, end, **kwargs):
-# 		super().__init__(start, end, **kwargs)
+class SegmentPath(LinePath):
+	def __init__(self, start, end, **kwargs):
+		super().__init__(start, end, **kwargs)
 
-# 	def getPoint(self, time):
-# 		p = self.start + (self.end - self.start) * time * self.speed
-# 		if time / > 1:
-# 			return self.end
-# 		return p
+	def getPoint(self, time):
+		if time * self.speed >= distance(self.start, self.end):
+			return self.end
+		return super().getPoint(time)

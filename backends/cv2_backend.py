@@ -58,4 +58,4 @@ class cv2Backend(WriterBackend):
 		self.frame[point[0]:point[0] + height, point[1]:point[1] + width] = image
 
 	def drawText(self, point, text, font, color, **kwargs):
-		cv2.putText(self.frame, text, font, kwargs["size"], color)
+		cv2.putText(self.frame, text, point, cv2.FONT_HERSHEY_SIMPLEX, kwargs["size"], color)

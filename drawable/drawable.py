@@ -55,7 +55,7 @@ class Text(Drawable):
 		self.start = ensureArray(start)
 		self.font = font
 		self.content = content
-		self.size = kwargs.get("size", 8)
+		self.size = kwargs.get("size", 1)
 
 		super().__init__(**kwargs)
 	

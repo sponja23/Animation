@@ -9,7 +9,7 @@ def ensureArray(obj, **kwargs):
 
 def ensureList(obj):
 	if type(obj) is not list and type(obj) is not tuple:
-		return list(obj)
+		return [obj]
 	return obj
 
 def ensureTuple(obj):
