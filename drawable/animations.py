@@ -103,17 +103,52 @@ class LinePath(Path):
 		self.end = ensureArray(end)
 		super().__init__(**kwargs)
 
+		self.distance = distance(self.start, self.end)
+		self.normalized_direction = ((self.end - self.start) / self.distance)
+
 		if "time" in kwargs:
-			self.speed = (distance(self.start, self.end) / kwargs["time"]) * .001
+			self.speed = (self.distance / kwargs["time"]) * .001
 
 	def getPoint(self, time):
-		return self.start + ((self.end - self.start) / distance(self.start, self.end)) * time * self.speed
+		return self.start + self.normalized_direction * time * self.speed
 
 class SegmentPath(LinePath):
 	def __init__(self, start, end, **kwargs):
 		super().__init__(start, end, **kwargs)
 
 	def getPoint(self, time):
-		if time * self.speed >= distance(self.start, self.end):
+		if time * self.speed >= self.distance:
 			return self.end
 		return super().getPoint(time)
+
+def findPlace(l, n):
+	for i, x in enumerate(l):
+		if x > n:
+			return i - 1
+
+class PointPath(Path):
+	def __init__(self, points, **kwargs):
+		self.points = [ensureArray(p) for p in points]
+		super().__init__(**kwargs)
+
+		self.distances = [distance(p1, p2) for p1, p2 in zip(self.points, self.points[1:])]
+		self.total_distance = sum(self.distances)
+		self.fractions = [distance / self.total_distance for distance in self.distances]
+
+		self.normalized_vectors = [(p2 - p1) / distance(p1, p2) for p1, p2, in zip(self.points, self.points[1:])]
+
+		if "time" in kwargs:
+			self.total_time = kwargs["time"]
+			self.speed = (self.total_distance / self.total_time)
+			self.durations = [self.total_time * fraction for fraction in self.fractions]
+			self.startTimes = [sum(self.durations[:part]) for part in range(len(self.points))]
+
+		print(self.startTimes)
+
+	def getPoint(self, time):
+		if time * .001 >= self.total_time:
+			return self.points[-1]
+		i = findPlace(self.startTimes, time * .001)
+		return self.points[i] + self.normalized_vectors[i] * (time * .001 - self.startTimes[i]) * self.speed
+
+

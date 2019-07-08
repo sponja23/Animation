@@ -14,7 +14,7 @@ canvas = Canvas((800, 800), backend = cv2, ratio = 50, fps = 24, debug = True)
 
 canvas.addObject(Grid((1, 1)))
 
-path = SegmentPath((0, 0), (3, 4), time=5)
+path = PointPath([(0, 0), (3, -1), (4, 3), (3, 5), (-4, 4)], time=10)
 canvas.addAnimation(path)
 canvas.addObject(Vector((0, 0), bindings={"end": path.point}, color=colors.red))
 
