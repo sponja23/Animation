@@ -139,16 +139,32 @@ class PointPath(Path):
 
 		if "time" in kwargs:
 			self.total_time = kwargs["time"]
-			self.speed = (self.total_distance / self.total_time)
-			self.durations = [self.total_time * fraction for fraction in self.fractions]
-			self.startTimes = [sum(self.durations[:part]) for part in range(len(self.points))]
+		else:
+			self.total_time = total_distance
+
+		self.speed = self.total_distance / self.total_time
+		self.durations = [self.total_time * fraction for fraction in self.fractions]
+		self.startTimes = [sum(self.durations[:part]) for part in range(len(self.points))]
+
 
 		print(self.startTimes)
 
 	def getPoint(self, time):
-		if time * .001 >= self.total_time:
+		time *= .001
+		if time >= self.total_time:
 			return self.points[-1]
-		i = findPlace(self.startTimes, time * .001)
-		return self.points[i] + self.normalized_vectors[i] * (time * .001 - self.startTimes[i]) * self.speed
+		i = findPlace(self.startTimes, time)
+		return self.points[i] + self.normalized_vectors[i] * (time - self.startTimes[i]) * self.speed
 
+class PolygonPath(PointPath):
+	def __init__(self, points, **kwargs):
+		super().__init__(points + [points[0]], **kwargs)
 
+class CyclicPolygonPath(PolygonPath):
+	def __init__(self, points, **kwargs):
+		super().__init__(points, **kwargs)
+
+	def getPoint(self, time):
+		time = (time * .001) % self.total_time
+		i = findPlace(self.startTimes, time)
+		return self.points[i] + self.normalized_vectors[i] * (time - self.startTimes[i]) * self.speed
