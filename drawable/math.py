@@ -9,24 +9,25 @@ class Curve(Drawable):
 	def __init__(self, function, range, **kwargs):
 		self.function = function
 		self.range = range
-		self.definedStep = kwargs.get("step", None)
+		self.step = kwargs.get("step", None)
 		self.origin = kwargs.get("origin", np.array([0, 0]))
 		self.cache = kwargs.get("cache", True)
 		self.cached_points = None
 		super().__init__(**kwargs)
 
+		self.exposedProperties += ["function", "range", "step"]
+
 	@property
 	def distance(self):
 		return self.range[1] - self.range[0]
-	
-	@property
-	def step(self):
-		if self.definedStep is not None:
-			return self.definedStep
+
+	def getStep(self):
+		if self.step is not None:
+			return self.step
 		return self.distance / 50
 
 	def domain(self):
-		return np.arange(self.range[0], self.range[1] + self.step, self.step)
+		return np.arange(self.range[0], self.range[1] + self.getStep, self.getStep)
 
 	def points(self, **kwargs):
 		return [self.function(x) for x in self.domain()]
@@ -78,7 +79,7 @@ class ParametricPathCurve(Curve, Animation):
 		Animation.__init__(self, **kwargs)
 
 	def domain(self):
-		return np.arange(self.range[0] + self.time * self.speed, self.range[1] + self.step + self.canvas.time * self.speed, self.step)
+		return np.arange(self.range[0] + self.time * self.speed, self.range[1] + self.getStep() + self.canvas.time * self.speed, self.getStep())
 
 class ParametricTraceCurve(ParametricPathCurve):
 	def __init__(self, function, start=0, **kwargs):
@@ -86,7 +87,7 @@ class ParametricTraceCurve(ParametricPathCurve):
 		super().__init__(function, start, 0, **kwargs, step=step)
 
 	def domain(self):
-		return np.arange(self.range[0], self.range[1] + self.step + self.time * self.speed, self.step)
+		return np.arange(self.range[0], self.range[1] + self.getStep() + self.time * self.speed, self.getStep())
 
 
 class Vector(Arrow):

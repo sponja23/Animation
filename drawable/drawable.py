@@ -15,6 +15,8 @@ class Drawable:
 		self.canvas = kwargs.get("canvas", None)
 		self.onBeforeDraw = ensureList(kwargs.get("onBeforeDraw", []))
 
+		self.exposedProperties = ["color"]
+
 		self.bindings = kwargs.get("bindings", {})
 
 		if "grid" in kwargs:
@@ -31,13 +33,19 @@ class Drawable:
 		self.canvas.objects[self.id] = self
 
 	def bind(self, propertyName, function):
-		self.bindings[propertyName] = function
+		if propertyName in self.exposedProperties:
+			self.bindings[propertyName] = function
+		else:
+			raise KeyError(propertyName)
 
 	def beforeDraw(self):
 		for f in self.onBeforeDraw:
 			f(self)
 		for name in self.bindings:
-			setattr(self, name, self.bindings[name]())
+			if name in self.exposedProperties:
+				setattr(self, name, self.bindings[name]())
+			else:
+				raise KeyError(propertyName)
 
 	def draw(self):
 		pass
@@ -45,7 +53,10 @@ class Drawable:
 class Point(Drawable):
 	def __init__(self, coords, **kwargs):
 		self.pos = ensureArray(coords)
+
 		super().__init__(**kwargs)
+		
+		self.exposedProperties += ["pos"]
 
 	def draw(self):
 		self.canvas.putPixel(self.pos, self.color)
@@ -58,6 +69,8 @@ class Text(Drawable):
 		self.size = kwargs.get("size", 1)
 
 		super().__init__(**kwargs)
+
+		self.exposedProperties += ["start", "content", "size"]
 	
 	def draw(self):
 		self.canvas.drawText(self.start, self.content, self.font, self.color, size=self.size)

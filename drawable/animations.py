@@ -16,13 +16,14 @@ class Animation:
 		self.canvas = canvas
 		if self.id is None:
 			self.id = canvas.getAnimationId()
+		self.startTime = self.canvas.time
 		self.canvas.animations[self.id] = self
 
 	@property
 	def time(self):
 		if self.paused:
 			return self.lastPausedTime
-		return self.canvas.time - self.pausedFor
+		return self.canvas.time - self.pausedFor - self.startTime
 
 	def pause(self):
 		if not self.paused:
@@ -33,6 +34,9 @@ class Animation:
 		if self.paused:
 			self.pausedFor += self.canvas.time - self.lastPausedTime 
 			self.paused = False
+
+	def reset(self):
+		self.startTime = self.canvas.time
 
 	def togglePause(self):
 		if not self.paused:
