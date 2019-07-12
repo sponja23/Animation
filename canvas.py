@@ -1,10 +1,12 @@
-from collections import OrderedDict
 import numpy as np
+import sys
+from collections import OrderedDict
 from drawable import colors
 from drawable.drawable import Text
 from utils import ensureArray
 from backends.pygame_backend import PygameBackend
 from time import sleep
+from ui import Menu
 
 def panning(self, pos, rel):
 	if self.backend.isKeyPressed("space") and self.backend.isButtonPressed(1):
@@ -30,6 +32,12 @@ def printPoint(self, pos, button):
 
 def setTextToTime(self):
 	self.content = str(self.canvas.time / 1000)
+
+def openMenuFunction(keybind):
+	def openMenu(self, key):
+		if key == keybind:
+			self.displayMenu()
+	return openMenu
 
 class EventHandler:
 	def __init__(self, types):
@@ -70,7 +78,8 @@ class Canvas:
 		self.data = OrderedDict({})
 
 		self.debug = kwargs.get("debug", False)
-		self.handler = EventHandler(["tick"])
+		self.handler = EventHandler(types=["tick"])
+		self.on("tick", type(self).onTick)
 
 		self.fps = self.backend.fps
 		self.frame_time = 1000 / self.fps
@@ -80,7 +89,8 @@ class Canvas:
 
 
 	def init_debug(self, **kwargs):
-		self.addObject(Text((self.min_x + .2, self.min_y + .2), "", "monospace", color=colors.black, onBeforeDraw=setTextToTime))
+		self.addObject(Text((0, 0), "", "monospace", color=colors.black, onBeforeDraw=setTextToTime,
+					   		bindings={"start": lambda: self.inverseTransform((10, self.size[1] - 20))}))
 
 
 #
@@ -98,6 +108,9 @@ class Canvas:
 	def init_interactive(self, **kwargs):
 		self.handler.add("mouseDown", "mouseUp", "mouseMove", "keyPress")
 
+		self.menu = Menu(self)
+		self.menu.addOption("Quit", lambda canvas: sys.exit(), hotkey='q')
+
 		if kwargs.get("movement", True):
 			self.handler.on("mouseDown", zooming)
 			self.handler.on("mouseMove", panning)
@@ -105,7 +118,15 @@ class Canvas:
 			self.handler.on("keyPress", screenCap)
 		if self.debug:
 			self.handler.on("mouseDown", printPoint)
-			
+
+		self.handler.on("keyPress", openMenuFunction(kwargs.get("menu_key", 'e')))
+
+	def displayMenu(self):
+		print("\n" + '\n'.join([f"[{option.hotkey}] {option.name}" for option in self.menu.getOptions() if option.enabled]))
+		self.menu.choose(input('> ')).execute()
+
+	def onTick(self, time_passed):
+		pass
 
 #
 #

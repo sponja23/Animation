@@ -10,7 +10,7 @@ from backends import cv2Backend, PygameBackend
 pygame = PygameBackend
 cv2 = cv2Backend
 
-canvas = Canvas((800, 800), backend = cv2, ratio = 50, fps = 24, debug = True)
+canvas = Canvas((800, 800), backend = pygame, ratio = 50, fps = 24, debug = True)
 
 canvas.addObject(Grid((1, 1)))
 
@@ -28,6 +28,3 @@ def record(time, filename):
 
 def save_frame(filename):
 	canvas.saveFrame(f"{filename}.jpg")
-
-canvas.advance(10)
-record(10, "test")
